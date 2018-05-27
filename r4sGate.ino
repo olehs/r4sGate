@@ -12,6 +12,7 @@ const char* password = "........";
 const char* dns_name = "r4sgate";
 
 //----------- MQTT Settings
+#define MQTT_DISABLED
 //#define MQTT_UPPERCASE_DEV_TOPIC
 
 const char* mqtt_server = "192.168.1.100";

@@ -1,95 +1,5 @@
 
-bool authorize(uint8_t retires = 5) {
-  while (retires-- && r4sAuthorize()) {
-    if (authorized)
-      return true;
-  }
-  return false;
-}
-
-String mqttBaseTopic(BLEAddress* addr) {
-  String base = String(MQTT_BASE_TOPIC);
-  if (addr) {
-    String sAddr = String(addr->toString().c_str());
-    sAddr.replace(":", "");
-#ifdef MQTT_UPPERCASE_DEV_TOPIC
-    sAddr.toUpperCase();
-#endif
-    base = String(base + "/") + sAddr;
-  }
-  return base;
-}
-
-bool mqttPublish(BLEAddress* addr, const char* topic, const char* payload) {
-  String base = mqttBaseTopic(addr);
-  return mqttClient.publish(String(base + topic).c_str(), payload);
-}
-
-bool mqttSubscription(BLEAddress* addr, bool on) {
-  String base = mqttBaseTopic(addr) + String(MQTT_CMND_TOPIC "/#");
-  if (on) {
-    if (mqttClient.subscribe(base.c_str())) {
-      Serial.print("MQTT Subscribed to ");
-      Serial.println(base.c_str());
-      return true;
-    }
-  } else {
-    if (mqttClient.unsubscribe(base.c_str())) {
-      Serial.print("MQTT Unsubscribed from ");
-      Serial.println(base.c_str());
-      return true;
-    }
-  }
-  return false;
-}
-
-void mqttConnected() {
-  if (pServerAddress)
-    mqttSubscription(pServerAddress, true);
-}
-
-void mqttCommand(const char* topic, const char* payload) {
-  String sTopic = String(topic);
-
-  if (!pServerAddress || !pBLEClient->isConnected()) {
-    sTopic.replace(MQTT_CMND_TOPIC "/", MQTT_ERROR_TOPIC "/");
-    mqttClient.publish(sTopic.c_str(), "NOT_CONNECTED");
-    return;
-  }
-
-  String base = mqttBaseTopic(pServerAddress) + String(MQTT_CMND_TOPIC "/");
-  if (!sTopic.startsWith(base)) {
-    sTopic.replace(MQTT_CMND_TOPIC "/", MQTT_ERROR_TOPIC "/");
-    mqttClient.publish(sTopic.c_str(), "UNKNOWN_DEVICE");
-    return;
-  }
-
-  String cmnd = sTopic.substring(base.length() - 1);
-  String stat = String(MQTT_STAT_TOPIC) + cmnd;
-  if (cmnd.equalsIgnoreCase("/off")) {
-    mqttPublish(pServerAddress, stat.c_str(), m171sOff() ? "1" : "0");
-
-  } else if (cmnd.equalsIgnoreCase("/boil")) {
-    uint8_t temp = String(payload).toInt();
-    bool res = temp > 0 ? m171sBoilAndHeat(temp) : m171sBoil();
-    mqttPublish(pServerAddress, stat.c_str(), res ? "1" : "0");
-    publishStatus(pServerAddress);
-
-  } else if (cmnd.equalsIgnoreCase("/heat")) {
-    uint8_t temp = String(payload).toInt();
-    mqttPublish(pServerAddress, stat.c_str(), m171sHeat(temp) ? "1" : "0");
-    publishStatus(pServerAddress);
-
-  } else if (cmnd.equalsIgnoreCase("/state")) {
-    publishStatus(pServerAddress);
-
-  } else {
-    sTopic.replace(MQTT_CMND_TOPIC "/", MQTT_ERROR_TOPIC "/");
-    mqttClient.publish(sTopic.c_str(), "UNKNOWN_COMMAND");
-    return;
-  }
-
-}
+// WebAPI functions
 
 String getStatusJson(BLEAddress* addr) {
   String json;
@@ -107,14 +17,6 @@ String getStatusJson(BLEAddress* addr) {
     json += String("}");
   }
   return json;
-}
-
-bool publishStatus(BLEAddress* addr) {
-  String json = getStatusJson(addr);
-  if (json.length()) {
-    return mqttPublish(addr, MQTT_STAT_TOPIC "/state", json.c_str());
-  }
-  return false;
 }
 
 void webHandleDefault() {
@@ -230,3 +132,119 @@ void webHandleDefault() {
   webServer.sendContent("");
 }
 
+// MQTT funcitons
+String mqttBaseTopic(BLEAddress* addr) {
+  String base = String(MQTT_BASE_TOPIC);
+  if (addr) {
+    String sAddr = String(addr->toString().c_str());
+    sAddr.replace(":", "");
+#ifdef MQTT_UPPERCASE_DEV_TOPIC
+    sAddr.toUpperCase();
+#endif
+    base = String(base + "/") + sAddr;
+  }
+  return base;
+}
+
+#ifndef MQTT_DISABLED
+bool mqttPublish(BLEAddress* addr, const char* topic, const char* payload) {
+  String base = mqttBaseTopic(addr);
+  return mqttClient.publish(String(base + topic).c_str(), payload);
+}
+
+bool mqttSubscription(BLEAddress* addr, bool on) {
+  String base = mqttBaseTopic(addr) + String(MQTT_CMND_TOPIC "/#");
+  if (on) {
+    if (mqttClient.subscribe(base.c_str())) {
+      Serial.print("MQTT Subscribed to ");
+      Serial.println(base.c_str());
+      return true;
+    }
+  } else {
+    if (mqttClient.unsubscribe(base.c_str())) {
+      Serial.print("MQTT Unsubscribed from ");
+      Serial.println(base.c_str());
+      return true;
+    }
+  }
+  return false;
+}
+
+void mqttConnected() {
+  mqttClient.subscribe(MQTT_BASE_TOPIC "/monitoring");
+  if (pServerAddress) {
+    mqttSubscription(pServerAddress, true);
+  }
+}
+
+void mqttCommand(const char* topic, const char* payload) {
+  String sTopic = String(topic);
+
+  if(sTopic.equalsIgnoreCase(MQTT_BASE_TOPIC "/monitoring")) {
+    String ival = String(payload);
+    if (ival.length()) {
+      r4sStatusUpdateTime = ival.toInt() * 1000;
+    }
+    mqttPublish(0, MQTT_STAT_TOPIC "/monitoring", String((long)(r4sStatusUpdateTime / 1000)).c_str());
+    return;
+  }
+  
+  if (!pServerAddress || !pBLEClient->isConnected()) {
+    sTopic.replace(MQTT_CMND_TOPIC "/", MQTT_ERROR_TOPIC "/");
+    mqttClient.publish(sTopic.c_str(), "NOT_CONNECTED");
+    return;
+  }
+
+  String base = mqttBaseTopic(pServerAddress) + String(MQTT_CMND_TOPIC "/");
+  if (!sTopic.startsWith(base)) {
+    sTopic.replace(MQTT_CMND_TOPIC "/", MQTT_ERROR_TOPIC "/");
+    mqttClient.publish(sTopic.c_str(), "UNKNOWN_DEVICE");
+    return;
+  }
+
+  String cmnd = sTopic.substring(base.length() - 1);
+  String stat = String(MQTT_STAT_TOPIC) + cmnd;
+  if (cmnd.equalsIgnoreCase("/off")) {
+    mqttPublish(pServerAddress, stat.c_str(), m171sOff() ? "1" : "0");
+
+  } else if (cmnd.equalsIgnoreCase("/boil")) {
+    uint8_t temp = String(payload).toInt();
+    bool res = temp > 0 ? m171sBoilAndHeat(temp) : m171sBoil();
+    mqttPublish(pServerAddress, stat.c_str(), res ? "1" : "0");
+    publishStatus(pServerAddress);
+
+  } else if (cmnd.equalsIgnoreCase("/heat")) {
+    uint8_t temp = String(payload).toInt();
+    mqttPublish(pServerAddress, stat.c_str(), m171sHeat(temp) ? "1" : "0");
+    publishStatus(pServerAddress);
+
+  } else if (cmnd.equalsIgnoreCase("/state")) {
+    publishStatus(pServerAddress);
+
+  } else {
+    sTopic.replace(MQTT_CMND_TOPIC "/", MQTT_ERROR_TOPIC "/");
+    mqttClient.publish(sTopic.c_str(), "UNKNOWN_COMMAND");
+    return;
+  }
+
+}
+
+bool publishStatus(BLEAddress* addr) {
+  String json = getStatusJson(addr);
+  if (json.length()) {
+    return mqttPublish(addr, MQTT_STAT_TOPIC "/state", json.c_str());
+  }
+  return false;
+}
+
+#endif //MQTT_DISABLED
+
+
+// R4S KETTLE Authorize
+bool authorize(uint8_t retires = 5) {
+  while (retires-- && r4sAuthorize()) {
+    if (authorized)
+      return true;
+  }
+  return false;
+}

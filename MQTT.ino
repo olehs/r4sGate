@@ -1,8 +1,10 @@
+
 #define MQTT_BASE_TOPIC "r4s"
 #define MQTT_CMND_TOPIC "/cmnd"
 #define MQTT_STAT_TOPIC "/stat"
 #define MQTT_ERROR_TOPIC "/error"
 
+#ifndef MQTT_DISABLED
 
 void mqttConnected();
 void mqttCommand(const char* topic, const char* payload);
@@ -60,3 +62,5 @@ void loopMQTT() {
   }
   mqttClient.loop();
 }
+
+#endif //MQTT_DISABLED
