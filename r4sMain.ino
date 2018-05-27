@@ -38,7 +38,7 @@ void loop() {
 
   if (disconnected) {
 #ifndef MQTT_DISABLED
-    mqttPublish(pServerAddress, "/Status", "Offline");
+    mqttPublish(pServerAddress, "/status", "offline");
 #endif //MQTT_DISABLED
     authorized = false;
     r4scounter = 0;
@@ -65,16 +65,16 @@ void loop() {
         Serial.println(verstr.c_str());
 
 #ifndef MQTT_DISABLED
-        mqttPublish(pServerAddress, "/Name", serverName);
-        mqttPublish(pServerAddress, "/Version", verstr.c_str());
-        mqttPublish(pServerAddress, "/Status", "Online");
+        mqttPublish(pServerAddress, "/name", serverName);
+        mqttPublish(pServerAddress, "/version", verstr.c_str());
+        mqttPublish(pServerAddress, "/status", "online");
         mqttSubscription(pServerAddress, true);
 #endif //MQTT_DISABLED
       } else {
         disconnected = true;
 
 #ifndef MQTT_DISABLED
-        mqttPublish(pServerAddress, "/Status", "AuthFailed");
+        mqttPublish(pServerAddress, MQTT_ERROR_TOPIC, "AUTH_FAILED");
         mqttSubscription(pServerAddress, false);
 #endif //MQTT_DISABLED
 
