@@ -143,9 +143,9 @@ void webHandleDefault() {
 
     webServer.sendContent("{\"monitoring\":");
     webServer.sendContent(String((long)(r4sStatusUpdateTime / 1000)));
-    webServer.sendContent(",");
 
     if (pServerAddress) {
+      webServer.sendContent(",");
       webServer.sendContent("\"");
       String sAddr = String(pServerAddress->toString().c_str());
       sAddr.replace(":", "");
@@ -160,8 +160,9 @@ void webHandleDefault() {
       } else {
         webServer.sendContent("offline\"");
       }
+      webServer.sendContent("}");
     }
-    webServer.sendContent("}}");
+    webServer.sendContent("}");
     webServer.sendContent("");
     return;
   }
