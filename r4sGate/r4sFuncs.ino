@@ -55,9 +55,13 @@ void webHandleDefault() {
       sAddr.toUpperCase();
 #endif
       webServer.sendContent(sAddr);
-      webServer.sendContent("\":{\"status\":\"");
+      webServer.sendContent("\":{\"name\":\"");
+      webServer.sendContent(serverName);
+      webServer.sendContent("\",\"status\":\"");
       if (pBLEClient->isConnected()) {
-        webServer.sendContent("online\",\"state\":");
+        webServer.sendContent("online\",\"rssi\":");
+        webServer.sendContent(String(pBLEClient->getRssi()).c_str());
+        webServer.sendContent(",\"state\":");
         webServer.sendContent(getStatusJson(pServerAddress));
       } else {
         webServer.sendContent("offline\"");
@@ -180,7 +184,7 @@ void mqttConnected() {
 void mqttCommand(const char* topic, const char* payload) {
   String sTopic = String(topic);
 
-  if(sTopic.equalsIgnoreCase(MQTT_BASE_TOPIC "/monitoring")) {
+  if (sTopic.equalsIgnoreCase(MQTT_BASE_TOPIC "/monitoring")) {
     String ival = String(payload);
     if (ival.length()) {
       r4sStatusUpdateTime = ival.toInt() * 1000;
@@ -188,7 +192,7 @@ void mqttCommand(const char* topic, const char* payload) {
     mqttPublish(0, MQTT_STAT_TOPIC "/monitoring", String((long)(r4sStatusUpdateTime / 1000)).c_str());
     return;
   }
-  
+
   if (!pServerAddress || !pBLEClient->isConnected()) {
     sTopic.replace(MQTT_CMND_TOPIC "/", MQTT_ERROR_TOPIC "/");
     mqttClient.publish(sTopic.c_str(), "NOT_CONNECTED");

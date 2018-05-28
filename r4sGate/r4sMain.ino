@@ -69,6 +69,7 @@ void loop() {
 #ifndef R4SGATE_NO_MQTT
         mqttPublish(pServerAddress, "/name", serverName);
         mqttPublish(pServerAddress, "/version", verstr.c_str());
+        mqttPublish(pServerAddress, "/rssi", String(pBLEClient->getRssi()).c_str());
         mqttPublish(pServerAddress, "/status", "online");
         mqttSubscription(pServerAddress, true);
 #endif //R4SGATE_NO_MQTT
