@@ -190,19 +190,23 @@ bool loopBLE() {
   }
 
   static uint8_t retries = bleConnectRetries;
+  static uint8_t rescan_retries = bleConnectRetriesBeforeRescan;
   if (pServerAddress && !pBLEClient->isConnected()) {
     if (connectToServer(*pServerAddress)) {
       Serial.println("We are now connected to the BLE Server.");
       connected = true;
       retries = bleConnectRetries;
-
+      rescan_retries = bleConnectRetriesBeforeRescan;
     } else {
       if (retries && (--retries == 0)) {
         Serial.println("Failed to connect to the server.");
         disconnected = true;
-        //        freeBLEServer();
-        return false;
       }
+      if (--rescan_retries == 0) {
+        Serial.println("Failed to reconnect to the server. Scanning for new one...");
+        freeBLEServer();
+      }
+      return false;
     }
   }
 

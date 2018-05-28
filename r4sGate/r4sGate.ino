@@ -32,8 +32,8 @@ const char* mqtt_client = "R4SClient";
 //----------- BLE Settings
 #define BLE_SCAN_DURATION 10
 
-// Device connect retries count before offline
-static uint8_t bleConnectRetries = 1;
+static uint8_t bleConnectRetries = 1; // Device connect retries before going offline
+static uint8_t bleConnectRetriesBeforeRescan = 4; // Device reconnect retries before starting new scan
 
 
 //----------- R4S Settings
