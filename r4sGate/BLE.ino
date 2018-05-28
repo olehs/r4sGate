@@ -81,8 +81,8 @@ bool checkServices() {
     Serial.print(" - Found our ");
     Serial.println(pRemoteService->toString().c_str());
   }
-  catch (BLEUuidNotFoundException e) {
-    Serial.print("Failed to find our service UUID: ");
+  catch (...) {
+    Serial.print("Failed to find our service UUID : ");
     Serial.println(serviceUUID.toString().c_str());
   }
 
@@ -119,8 +119,13 @@ bool checkServices() {
   Serial.println(pRemoteRXDescriptor->getHandle(), HEX);
 
   uint16_t enNotify = 0x0001;
-  pRemoteRXDescriptor->writeValue((uint8_t*)&enNotify, sizeof(enNotify));
-  delay(10);
+  try {
+    pRemoteRXDescriptor->writeValue((uint8_t*)&enNotify, sizeof(enNotify));
+    delay(10);
+  } catch (...) {
+    Serial.println("writeValue failed");
+    return false;
+  }
 
   return true;
 }

@@ -15,17 +15,20 @@ uint8_t r4sWrite(uint8_t cmd, uint8_t* data = 0, size_t len = 0) {
     memcpy(&buffer[3], data, len);
   }
 
-  pRemoteTXCharacteristic->writeValue(buffer, sz);
+  try {
+    pRemoteTXCharacteristic->writeValue(buffer, sz);
 
 #ifdef R4S_LOG_EXCHANGE
-  Serial.print(">> ");
-  for (int i = 0 ; i < sz; i++) {
-    Serial.print(*(buffer + i), HEX);
-    Serial.print(" ");
-  }
-  Serial.println();
+    Serial.print(">> ");
+    for (int i = 0 ; i < sz; i++) {
+      Serial.print(*(buffer + i), HEX);
+      Serial.print(" ");
+    }
+    Serial.println();
 #endif
-
+  } catch (...) {
+    Serial.println("writeValue failed");
+  }
   return r4scounter++;
 }
 
@@ -37,14 +40,14 @@ int8_t r4sCommand(uint8_t cmd, uint8_t* data = 0, size_t len = 0) {
   while (--timeout && (notifyDataLen == -1)) {
     delay(10);
   }
-  
+
 #ifdef R4S_LOG_EXCHANGE
-    Serial.print("<< ");
-    for (int i = 0 ; i < notifyDataLen; i++) {
-      Serial.print(*(notifyData + i), HEX);
-      Serial.print(" ");
-    }
-    Serial.println();
+  Serial.print("<< ");
+  for (int i = 0 ; i < notifyDataLen; i++) {
+    Serial.print(*(notifyData + i), HEX);
+    Serial.print(" ");
+  }
+  Serial.println();
 #endif
 
   if (notifyDataLen > 1 && notifyData[1] != cnt)
