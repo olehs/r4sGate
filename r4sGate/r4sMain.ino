@@ -27,9 +27,11 @@ void setup() {
   Serial.println("Starting Arduino R4S Gateway...");
 
   setupWiFi();
-#ifndef MQTT_DISABLED
+
+#ifndef R4SGATE_NO_MQTT
   setupMQTT();
-#endif //MQTT_DISABLED
+#endif //R4SGATE_NO_MQTT
+
   setupWeb();
   setupBLE();
 }
@@ -37,16 +39,16 @@ void setup() {
 void loop() {
 
   if (disconnected) {
-#ifndef MQTT_DISABLED
+#ifndef R4SGATE_NO_MQTT
     mqttPublish(pServerAddress, "/status", "offline");
-#endif //MQTT_DISABLED
+#endif //R4SGATE_NO_MQTT
     authorized = false;
     r4scounter = 0;
   }
 
-#ifndef MQTT_DISABLED
+#ifndef R4SGATE_NO_MQTT
   loopMQTT();
-#endif //MQTT_DISABLED
+#endif //R4SGATE_NO_MQTT
   loopWeb();
 
   if (!loopBLE())
@@ -64,19 +66,19 @@ void loop() {
         Serial.print("Firmware Version : ");
         Serial.println(verstr.c_str());
 
-#ifndef MQTT_DISABLED
+#ifndef R4SGATE_NO_MQTT
         mqttPublish(pServerAddress, "/name", serverName);
         mqttPublish(pServerAddress, "/version", verstr.c_str());
         mqttPublish(pServerAddress, "/status", "online");
         mqttSubscription(pServerAddress, true);
-#endif //MQTT_DISABLED
+#endif //R4SGATE_NO_MQTT
       } else {
         disconnected = true;
 
-#ifndef MQTT_DISABLED
+#ifndef R4SGATE_NO_MQTT
         mqttPublish(pServerAddress, MQTT_ERROR_TOPIC, "AUTH_FAILED");
         mqttSubscription(pServerAddress, false);
-#endif //MQTT_DISABLED
+#endif //R4SGATE_NO_MQTT
 
         freeBLEServer();
         Serial.println(" - Authorization failed");
@@ -84,7 +86,7 @@ void loop() {
       }
     }
 
-#ifndef MQTT_DISABLED
+#ifndef R4SGATE_NO_MQTT
     if (authorized) {
       if (r4sStatusUpdateTime) {
         static unsigned long stTime = 0;
@@ -94,7 +96,7 @@ void loop() {
         }
       }
     }
-#endif //MQTT_DISABLED
+#endif //R4SGATE_NO_MQTT
 
   }
   delay(10);

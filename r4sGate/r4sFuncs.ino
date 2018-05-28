@@ -146,7 +146,7 @@ String mqttBaseTopic(BLEAddress* addr) {
   return base;
 }
 
-#ifndef MQTT_DISABLED
+#ifndef R4SGATE_NO_MQTT
 bool mqttPublish(BLEAddress* addr, const char* topic, const char* payload) {
   String base = mqttBaseTopic(addr);
   return mqttClient.publish(String(base + topic).c_str(), payload);
@@ -237,7 +237,7 @@ bool publishStatus(BLEAddress* addr) {
   return false;
 }
 
-#endif //MQTT_DISABLED
+#endif //R4SGATE_NO_MQTT
 
 
 // R4S KETTLE Authorize

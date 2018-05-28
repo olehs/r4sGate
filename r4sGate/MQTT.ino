@@ -4,7 +4,7 @@
 #define MQTT_STAT_TOPIC "/stat"
 #define MQTT_ERROR_TOPIC "/error"
 
-#ifndef MQTT_DISABLED
+#ifndef R4SGATE_NO_MQTT
 
 void mqttConnected();
 void mqttCommand(const char* topic, const char* payload);
@@ -63,4 +63,4 @@ void loopMQTT() {
   mqttClient.loop();
 }
 
-#endif //MQTT_DISABLED
+#endif //R4SGATE_NO_MQTT
