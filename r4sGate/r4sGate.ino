@@ -1,8 +1,15 @@
 #define R4SGATE_NO_MQTT
+#define R4SGATE_NO_OTA
 
 #include "WiFi.h"
 #include "WiFiClient.h"
 #include "ESPmDNS.h"
+
+#ifndef R4SGATE_NO_OTA
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
+#endif //R4SGATE_NO_OTA
+
 #include "WebServer.h"
 
 #ifndef R4SGATE_NO_MQTT
@@ -11,6 +18,7 @@
 
 #include "BLEDevice.h"
 #include "m171s.h"
+
 
 //----------- WiFi Settings
 const char* ssid = "........";
