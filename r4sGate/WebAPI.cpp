@@ -1,14 +1,11 @@
-
-WebServer webServer(WEB_SERVER_PORT);
-
-void webHandleDefault();
+#include "WebAPI.h"
 
 void setupWeb() {
 
   webServer.onNotFound(webHandleDefault);
 
   webServer.begin();
-  Serial.println("WebAPI server started");
+  log_i("WebAPI server started");
 }
 
 void loopWeb(void) {

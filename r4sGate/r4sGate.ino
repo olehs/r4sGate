@@ -1,53 +1,65 @@
-#define R4SGATE_NO_MQTT
-#define R4SGATE_NO_OTA
+#include "r4sFuncs.h"
 
-#include "WiFi.h"
-#include "WiFiClient.h"
-#include "ESPmDNS.h"
+void setup() {
+  Serial.begin(115200);
+  log_i("Starting Arduino R4S Gateway...");
 
-#ifndef R4SGATE_NO_OTA
-#include <WiFiUdp.h>
-#include <ArduinoOTA.h>
-#endif //R4SGATE_NO_OTA
+  setupWiFi();
+  setupMQTT();
+  setupWeb();
+  setupBLE();
+}
 
-#include "WebServer.h"
+void loop() {
+  if (disconnected) {
+    mqttPublish(pServerAddress, "/status", "offline");
+//    freeBLEServer();
+    authorized = false;
+  }
 
-#ifndef R4SGATE_NO_MQTT
-#include "PubSubClient.h"
-#endif //R4SGATE_NO_MQTT
+  loopMQTT();
+  loopWeb();
 
-#include "BLEDevice.h"
-#include "m171s.h"
+  if (!loopBLE())
+    return;
 
+  if (pBLEClient->isConnected()) {
 
-//----------- WiFi Settings
-const char* ssid = "........";
-const char* password = "........";
-const char* dns_name = "r4sgate";
+    if (!authorized) {
+      if (authorize()) {
+        uint16_t ver = r4sVersion();
+        log_i("Server name : %s", serverName);
 
-//----------- MQTT Settings
-//#define MQTT_UPPERCASE_DEV_TOPIC
+        String verstr = String(ver >> 8) + "." + String(ver % 256);
+        log_i("Firmware Version : %s", verstr.c_str());
 
-const char* mqtt_server = "192.168.1.100";
-const uint16_t mqtt_port = 1883;
-const char* mqtt_client = "R4SClient";
+        mqttPublish(pServerAddress, "/name", serverName);
+        mqttPublish(pServerAddress, "/version", verstr.c_str());
+        mqttPublish(pServerAddress, "/rssi", String(pBLEClient->getRssi()).c_str());
+        mqttPublish(pServerAddress, "/status", "online");
+        mqttSubscription(pServerAddress, true);
+      } else {
+        disconnected = true;
 
+        mqttPublish(pServerAddress, MQTT_ERROR_TOPIC, "AUTH_FAILED");
+        mqttSubscription(pServerAddress, false);
 
-//----------- WebAPI Settings
-#define WEB_SERVER_PORT 80
+        freeBLEServer();
+        log_e(" - Authorization failed");
+        return;
+      }
+    }
 
+    if (authorized) {
+      if (r4sStatusUpdateTime) {
+        static unsigned long stTime = 0;
+        if (stTime + r4sStatusUpdateTime < millis()) {
+          publishStatus(pServerAddress);
+          stTime = millis();
+        }
+      }
+    }
 
-//----------- BLE Settings
-#define BLE_SCAN_DURATION 10
-
-static uint8_t bleConnectRetries = 1; // Device connect retries before going offline
-static uint8_t bleConnectRetriesBeforeRescan = 4; // Device reconnect retries before starting new scan
-
-
-//----------- R4S Settings
-//#define R4S_LOG_EXCHANGE
-
-// Change this 8-byte Auth code randomly
-static uint8_t r4sAuth[8] = { 0xb5, 0x4c, 0x75, 0xb1, 0xb4, 0xac, 0x88, 0xef };
-
-static unsigned long r4sStatusUpdateTime = 5000;
+  }
+  delay(10);
+}

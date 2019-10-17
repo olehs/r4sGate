@@ -2,5 +2,5 @@
 
 Required libraries :
 * PubSubClient
-* https://github.com/olehs/ESP32_BLE_Arduino
-* https://github.com/zhouhan0126/WebServer-esp32
+
+Tested with Arduino 1.8.10

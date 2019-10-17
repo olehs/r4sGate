@@ -1,30 +1,13 @@
+#include "r4sFuncs.h"
 
-// WebAPI functions
-
-String getStatusJson(BLEAddress* addr) {
-  String json;
-  M171SStatus st = m171sStatus();
-  if (st.isValid()) {
-    json = String("{");
-    json += String("\"temp\":") + String(st.currentTemperature) + String(",");
-    json += String("\"target\": ") + String(st.targetTemperature) + String(",");
-    json += String("\"heat\": ") + String(st.isHeating ? "1" : "0") + String(",");
-    json += String("\"state\": ") + String(st.state) + String(",");
-    json += String("\"hours\": ") + String(st.remainingHours) + String(",");
-    json += String("\"mins\": ") + String(st.remainingMinutes) + String(",");
-    json += String("\"prog\": ") + String(st.program) + String(",");
-    json += String("\"error\": ") + String(st.error);
-    json += String("}");
-  }
-  return json;
-}
+#include "WiFi.h"
+#include "ESPmDNS.h"
 
 void webHandleDefault() {
   webServer.setContentLength(CONTENT_LENGTH_UNKNOWN);
 
   String sTopic = webServer.uri();
-  Serial.print("Web request : ");
-  Serial.println(sTopic.c_str());
+  log_i("Web request : %s", sTopic.c_str());
 
   if (sTopic.equals("/")) {
     webServer.sendHeader("Location", String("http://") + WiFi.localIP().toString() + String("/" MQTT_BASE_TOPIC), true);
@@ -150,7 +133,6 @@ String mqttBaseTopic(BLEAddress* addr) {
   return base;
 }
 
-#ifndef R4SGATE_NO_MQTT
 bool mqttPublish(BLEAddress* addr, const char* topic, const char* payload) {
   String base = mqttBaseTopic(addr);
   return mqttClient.publish(String(base + topic).c_str(), payload);
@@ -160,14 +142,12 @@ bool mqttSubscription(BLEAddress* addr, bool on) {
   String base = mqttBaseTopic(addr) + String(MQTT_CMND_TOPIC "/#");
   if (on) {
     if (mqttClient.subscribe(base.c_str())) {
-      Serial.print("MQTT Subscribed to ");
-      Serial.println(base.c_str());
+      log_d("MQTT Subscribed to %s", base.c_str());
       return true;
     }
   } else {
     if (mqttClient.unsubscribe(base.c_str())) {
-      Serial.print("MQTT Unsubscribed from ");
-      Serial.println(base.c_str());
+      log_d("MQTT Unsubscribed from %s", base.c_str());
       return true;
     }
   }
@@ -241,14 +221,33 @@ bool publishStatus(BLEAddress* addr) {
   return false;
 }
 
-#endif //R4SGATE_NO_MQTT
-
 
 // R4S KETTLE Authorize
-bool authorize(uint8_t retires = 5) {
+bool authorize(uint8_t retires) {
+  r4scounter = 0;
   while (retires-- && r4sAuthorize()) {
     if (authorized)
       return true;
+    delay(500);
   }
   return false;
+}
+
+
+void setupWiFi() {
+  // We start by connecting to a WiFi network
+  log_d("\nConnecting to %s", ssid);
+
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  log_i("\nWiFi connected\nIP address: %s", WiFi.localIP().toString().c_str());
+
+  if (MDNS.begin("esp32")) {
+    log_d("MDNS responder started");
+  }
 }
