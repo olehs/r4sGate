@@ -8,6 +8,7 @@ esp_ble_addr_type_t serverAddressType;
 
 bool connected = false;
 bool disconnected = false;
+bool scanning = false;
 
 char serverName[BLE_INPUT_BUFFSIZE];
 uint8_t notifyData[BLE_INPUT_BUFFSIZE];
@@ -43,7 +44,7 @@ void MyAdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice advertisedDevice)
   if (advertisedDevice.haveServiceUUID() && advertisedDevice.getServiceUUID().equals(serviceUUID)) {
     log_i("Found our device at address : %s", advertisedDevice.getAddress().toString().c_str());
 
-    advertisedDevice.getScan()->stop();
+    stopScanning();
 
     strcpy(serverName, advertisedDevice.getName().c_str());
     pServerAddress = new BLEAddress(*advertisedDevice.getAddress().getNative());
@@ -145,8 +146,17 @@ void disconnectFromServer() {
 }
 
 void scanDevices() {
-  log_e("Starting device scan...");
-  BLEDevice::getScan()->start(BLE_SCAN_DURATION);
+  if (scanning)
+    return;
+
+  log_i("Starting device scan...");
+  scanning = BLEDevice::getScan()->start(BLE_SCAN_DURATION, nullptr, false);
+}
+
+void stopScanning()
+{
+  BLEDevice::getScan()->stop();
+  scanning = false;
 }
 
 void setupBLE() {

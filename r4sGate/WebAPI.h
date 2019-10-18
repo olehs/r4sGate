@@ -2,9 +2,8 @@
 #define WEB_API_H
 
 #include "WebServer.h"
-#include "r4scfg.h"
 
-static WebServer webServer(WEB_SERVER_PORT);
+extern WebServer webServer;
 
 void webHandleDefault();
 

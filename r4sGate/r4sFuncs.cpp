@@ -3,6 +3,8 @@
 #include "WiFi.h"
 #include "ESPmDNS.h"
 
+String prevStatus;
+
 void webHandleDefault() {
   webServer.setContentLength(CONTENT_LENGTH_UNKNOWN);
 
@@ -215,8 +217,11 @@ void mqttCommand(const char* topic, const char* payload) {
 
 bool publishStatus(BLEAddress* addr) {
   String json = getStatusJson(addr);
-  if (json.length()) {
-    return mqttPublish(addr, MQTT_STAT_TOPIC "/state", json.c_str());
+  if (json.length() && (prevStatus != json)) {
+    if (mqttPublish(addr, MQTT_STAT_TOPIC "/state", json.c_str())) {
+      prevStatus = json;
+      return true;
+    }
   }
   return false;
 }
@@ -242,7 +247,6 @@ void setupWiFi() {
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    Serial.print(".");
   }
 
   log_i("\nWiFi connected\nIP address: %s", WiFi.localIP().toString().c_str());

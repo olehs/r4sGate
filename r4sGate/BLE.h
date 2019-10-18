@@ -12,6 +12,7 @@ extern esp_ble_addr_type_t serverAddressType;
 
 extern bool connected;
 extern bool disconnected;
+extern bool scanning;
 
 extern char serverName[BLE_INPUT_BUFFSIZE];
 extern uint8_t notifyData[BLE_INPUT_BUFFSIZE];
@@ -38,6 +39,7 @@ bool checkServices();
 bool connectToServer(BLEAddress *pAddress, esp_ble_addr_type_t type);
 void disconnectFromServer();
 void scanDevices();
+void stopScanning();
 void setupBLE();
 void freeBLEServer();
 bool loopBLE();

@@ -13,7 +13,6 @@ void setup() {
 void loop() {
   if (disconnected) {
     mqttPublish(pServerAddress, "/status", "offline");
-//    freeBLEServer();
     authorized = false;
   }
 

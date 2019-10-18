@@ -9,8 +9,6 @@
 
 void setupWiFi();
 
-void webHandleDefault();
-
 // MQTT funcitons
 String mqttBaseTopic(BLEAddress* addr);
 
