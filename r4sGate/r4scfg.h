@@ -10,11 +10,10 @@ static const char* dns_name = "r4sgate";
 
 //----------- MQTT Settings
 //#define MQTT_UPPERCASE_DEV_TOPIC
-#define MQTT_BASE_TOPIC "r4sgate"
+#define MQTT_BASE_TOPIC "r4s"
 #define MQTT_CMND_TOPIC "/cmnd"
 #define MQTT_STAT_TOPIC "/stat"
 #define MQTT_ERROR_TOPIC "/error"
-
 
 static const char* mqtt_server = "192.168.2.1";
 static const uint16_t mqtt_port = 1883;
