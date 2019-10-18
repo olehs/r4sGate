@@ -33,6 +33,7 @@ static uint8_t bleConnectRetriesBeforeRescan = 4; // Device reconnect retries be
 
 //----------- R4S Settings
 //#define R4S_LOG_EXCHANGE
+//#define R4S_G200S_SUPPORT
 
 // Change this 8-byte Auth code randomly
 static uint8_t r4sAuth[8] = { 0xb5, 0x4c, 0x75, 0xb1, 0xb4, 0xac, 0x88, 0xef };

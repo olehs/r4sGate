@@ -70,7 +70,16 @@ bool m171sOn(bool boil, uint8_t temp) {
   if (r4sCommand(0x05, data, sizeof(data)) != 5)
     return false;
 
-  return notifyData[3] == 1;
+  if (notifyData[3] == 1)
+    return false;
+
+#ifdef R4S_G200S_SUPPORT
+  if (r4sCommand(0x03) != 5)
+    return false;
+  if (notifyData[3] == 1);
+#endif
+
+  return true;
 }
 
 bool m171sBoil() {
