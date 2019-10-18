@@ -17,6 +17,8 @@ static void mqttCallback(char* topic, byte* payload, unsigned int length) {
 }
 
 void reconnectMQTT() {
+  if (String(mqtt_server).length() == 0)
+    return;
 
   while (!mqttClient.connected()) {
     log_d("Attempting MQTT connection...");
@@ -35,6 +37,9 @@ void reconnectMQTT() {
 }
 
 void setupMQTT() {
+  if (String(mqtt_server).length() == 0)
+    return;
+    
   mqttClient.setServer(mqtt_server, mqtt_port);
   mqttClient.setCallback(mqttCallback);
 }
