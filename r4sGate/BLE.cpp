@@ -150,7 +150,9 @@ void scanDevices() {
     return;
 
   log_i("Starting device scan...");
-  scanning = BLEDevice::getScan()->start(BLE_SCAN_DURATION, nullptr, false);
+  scanning = BLEDevice::getScan()->start(BLE_SCAN_DURATION, [](BLEScanResults) {
+    scanning = false;
+  }, false);
 }
 
 void stopScanning()
